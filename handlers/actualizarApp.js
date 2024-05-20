@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { initDatabase} from '../database/database';
-import { insertArticulosFromAPI } from '../database/controllers/Articulos.Controller';
+import { borrarArticulosDeSqlite, insertArticulosFromAPI, insertArticulosFrecuentesToSqlite } from '../database/controllers/Articulos.Controller';
 import { insertUsuariosFromAPI } from '../database/controllers/Usuarios.controler';
 import { insertClientesFromAPI } from '../database/controllers/Clientes.Controller';
 import { preventasBDDToArray } from '../database/controllers/Preventa.Controller';
@@ -55,7 +55,7 @@ const actualizarArticulos = async (setLogs) => {
         const data = response.data;
 
         // Define el tamaño del lote
-        const batchSize = 500; // Por ejemplo, 100 artículos por lote
+        const batchSize = 500; // Por ejemplo, 500 artículos por lote
 
         // Divide los datos en lotes de tamaño fijo
         const batches = [];
@@ -65,6 +65,7 @@ const actualizarArticulos = async (setLogs) => {
 
         // Inserta cada lote en la base de datos
         for (const batch of batches) {
+            console.log();
             await insertArticulosFromAPI(batch);
             handleLogs(logs,(`Lote de ${batch.length} artículos actualizado correctamente.`),setLogs);
         }
@@ -75,7 +76,8 @@ const actualizarArticulos = async (setLogs) => {
 };
 
 const actualizarPreventas = async (preventasJSON, mensajes) => {
-    try {
+  console.log("!!actiaApp 78 :",await configuracionEndPoint() + 'preventas', preventasJSON);  
+  try {
         const response = await axios.post(await configuracionEndPoint() + 'preventas', preventasJSON);
     } catch (error) {
         mensajes.hayErrores = true;
@@ -129,6 +131,7 @@ const enviarPreventas = async (setLogs) => {
       await initDatabase(setLogs),
       await actualizarVendedores(setLogs),
       await actualizarClientes(setLogs),
+      await borrarArticulosDeSqlite(),
       await actualizarArticulos(setLogs),
       await enviarPreventas(setLogs),
       logs = handleLogs(logs, "Sincronizacion completa.", setLogs)
@@ -138,4 +141,47 @@ const enviarPreventas = async (setLogs) => {
       );
   }
 
-export { actualizarAPP, actualizarVendedores, actualizarClientes, initDatabase, enviarPreventas};
+  const getArticulosFrecuentesDesdeAPI = async (cliente) => {
+    // Obtener la fecha actual
+    const today = new Date();
+    const year = today.getFullYear();
+    // JavaScript cuenta los meses desde 0 (enero es 0, diciembre es 11)
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    
+    // Formatear la fecha actual en el formato AAAA-MM-DD
+    const formattedToday = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  
+    // Obtener la fecha de un año atrás
+    const oneYearAgo = new Date(year -1, month , day); // Restar 1 al año actual
+  
+    // Formatear la fecha de un año atrás en el formato AAAA-MM-DD
+    const formattedOneYearAgo = `${oneYearAgo.getFullYear()}-${(oneYearAgo.getMonth() + 1).toString().padStart(2, '0')}-${oneYearAgo.getDate().toString().padStart(2, '0')}`;
+    
+    console.log("Trayendo Articulos frecuentes...");
+   
+    try {
+      const response = await axios.get(await configuracionEndPoint() + "articulosfrecuentes?clienteCodigo=" + cliente + "&fechaDesde=" + formattedOneYearAgo + "&fechaHasta=" + formattedToday);
+      const data = response.data;
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.log('Error al obtener artículos frecuentes ', error);
+    }
+  };  
+// const getArticulosFrecuentesDesdeAPI = async (cliente) => {
+//   const fechaActual = //fecha de hoy
+//   const fechaAnoAtras = //fecha un año atras
+//   console.log("Trayendo Articulos frecuentes...");
+ 
+//   try {
+//       const response = await axios.get(await configuracionEndPoint()+"articulosfrecuentes?clienteCodigo="+cliente+"&fechaDesde=2024-02-01&fechaHasta=2024-04-06");
+//       const data = response.data;
+//       console.log(data);
+//       return (data);
+//   } catch (error) {
+//       console.log('Error al obtener articulos frecuentes ', error);
+//   }
+// };
+
+export { actualizarAPP, actualizarVendedores, actualizarClientes, initDatabase, enviarPreventas, getArticulosFrecuentesDesdeAPI};

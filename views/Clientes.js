@@ -59,9 +59,10 @@ const Clientes = () => {
           <TouchableOpacity onPress={() => handleClientClick(item)}> 
             <View style={styles.clienteItem}>
               <View >
-                <Icon name="user" size={24} color="#626262" />
+                {/* <Icon name="user" size={24} color="#626262" /> */}
                 <Text style={styles.text}>{item.descripcion}</Text>
-                <Text style={styles.codigo}>{item.id}</Text>
+                <Text style={styles.text}>Lista {item.listaPrecio}</Text>
+                <Text style={styles.codigo}>Codigo {item.id}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -104,8 +105,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     paddingTop: 20,
-    margin: 6,
-    marginTop: -22,
+    margin: 0,
+    marginTop: 2,
     zIndex: -1,
     backgroundColor: '#c9eefa',//background liviano
     borderWidth: 2, // Agregar borde

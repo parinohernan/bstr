@@ -44,14 +44,14 @@ const UserMenuPPal = ({route}) => {
     <View style={styles.container}>
       <View style={styles.titulo}>
         <View ></View>
-        <Text style={styles.tituloText}>BSTR</Text>
+        <Text style={styles.tituloText}>ASTR</Text>
         <Text style={styles.subTituloText}>Vendedor: {user.vendedor}</Text>
       </View>
       <View>
       <Image
-          source={require('../assets/icon1.png')}
-          style={[styles.logo, { width: 200, height:200}]} // Establece el ancho de la imagen
-          resizeMode="center" // Ajusta la imagen proporcionalmente dentro de su contenedor
+          source={require('../assets/favicon.png')}
+          //style={[styles.logo, { width: width - 40 }]} // Establece el ancho de la imagen
+          resizeMode="contain" // Ajusta la imagen proporcionalmente dentro de su contenedor
         />
       </View>
       <View style={styles.bottonContainer}>
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     // backgroundColor: '#0c2f3c',
   },
   logo: {
-    // marginBottom: 20,
+    marginBottom: 20,
   },
   tituloText: {
     alignContent: "center",

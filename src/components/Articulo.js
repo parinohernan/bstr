@@ -7,12 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 
 
 function Articulo ({ item }) {
-    // const navigation = useNavigation();
-    // const openModal = (articulo) => {
-    //     // setSelectedArticulo(articulo);
-    //     // setModalVisible(true);
-    //     navigation.navigate('AddArticulo', { articulo });
-    // };
+
     (
     <TouchableOpacity onPress={() => openModal(item)}>
       <View style={styles.articuloItem}>
@@ -22,13 +17,6 @@ function Articulo ({ item }) {
         <Text style={styles.articuloInfo}>
           Precio: ${item.precio.toFixed(2)}
         </Text>
-        {/*<TouchableOpacity onPress={() => handleCheck(item.id)}>
-           <Icon
-            name="check"
-            size={20}
-            color={estaElegido(item.id) ? 'blue' : '#fff'}
-          /> 
-        </TouchableOpacity>*/}
       </View>
     </TouchableOpacity>)
 }

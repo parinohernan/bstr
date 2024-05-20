@@ -1,29 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput, SafeAreaView, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput,Modal, Alert} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useNavigation, useIsFocused} from '@react-navigation/native';
-import { obtenerPreventaDeStorage, preventaDesdeBDD, calcularTotal, limpiarPreventaDeStorage } from "../src/utils/storageUtils";
+import { useNavigation, useIsFocused, useFocusEffect} from '@react-navigation/native';
+import { obtenerPreventaDeStorage, preventaDesdeBDD, calcularTotal, limpiarPreventaDeStorage, eliminarItemEnPreventaEnStorage } from "../src/utils/storageUtils";
 import { grabarPreventaEnBDD } from '../database/controllers/Preventa.Controller';
 import { getClientes } from '../database/controllers/Clientes.Controller';
-import { nextPreventa, configuracionCantidadMaximaArticulos } from '../src/utils/storageConfigData';
-import { Fontisto } from '@expo/vector-icons';
-// import { useIsFocused } from '@react-navigation/native';
+import { nextPreventa, configuracionCantidadMaximaArticulos, configuracionEndPoint  } from '../src/utils/storageConfigData';
+import { getArticulosFrecuentesDesdeAPI } from '../handlers/actualizarApp';
+import { ModalEliminarEditarCancelar } from '../src/components/preventa/Modal';
+import axios from 'axios';
+import { AddArticulo } from '../src/components/AddArticulo';
+import { getArticuloPorCodigo } from '../database/controllers/Articulos.Controller';
+
+
+// import { Fontisto } from '@expo/vector-icons';
 
 const Preventa = (props) => {
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleBeforeRemove = async (e) => {
+        e.preventDefault();
+  
+        try {
+          // Aquí la lógica para verificar si hay una preventa sin grabar
+          // y preguntar al usuario si quiere guardar o descartar los cambios
+          const carrito2 = await obtenerPreventaDeStorage();
+          if (carrito2.length > 0) {
+            e.preventDefault();
+            Alert.alert(
+              'No guardaste la preventa',
+              '¿Quieres guardar los cambios antes de salir?',
+              [
+                { text: 'Descartar preventa', style: 'destructive', onPress: () => {limpiarPreventaDeStorage(); navigation.goBack() }},
+                // { text: 'Guardar', style: 'default', onPress: () => grabarPreventa() },
+                { text: 'Volver a preventa', style: 'cancel', onPress: () => {} },
+              ]
+            );
+          } else {
+            // Si no hay cambios sin guardar, puedes dejar que el usuario salga
+            navigation.dispatch(e.data.action);
+          }
+        } catch (error) {
+          console.error('Error al obtener la preventa:', error);
+        }
+      };
+  
+      const unsubscribe = navigation.addListener('beforeRemove', handleBeforeRemove);
+  
+      return unsubscribe;
+    }, [navigation, isModalEditarVisible])
+  );
+
   const isFocused = useIsFocused();
   const {route} = props;
   const {params} = route;
   let {preventaNumero, cliente, edit} = params;
-  console.log("PRV13 prevnumero y cliente",preventaNumero,cliente);
-  
   const navigation = useNavigation();
-
-  /*busco los items que ya esten cargados en la preventa y los cargo en el estado*/ 
   const [carrito, setCarrito] = useState([]);
   const [cantidadItems, setCantidadItems] = useState([]);
-  const [total, setTotal] = useState(9999999);
-  const [nueva, setNueva] = useState(true);
+  const [total, setTotal] = useState();
+  const [nueva, setNueva] = useState(true);/* solo indica si es una nueva preventa o estoy editando*/
   const [dataCliente, setDataCliente] = useState( params.cliente );
+  const [articulosFrecuentes, setArticulosFrecuentes] = useState([]);
+  const [hasInternetAccess, setHasInternetAccess] = useState(false);
+  const [estoyBuscandoFrecuentes, setEstoyBuscandoFrecuentes] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalEditarVisible, setIsModalEditarVisible] = useState(false);
+  // const [editan, setOcultarPreventa] = useState(true);
+  const [nota, setNota] = useState('');
+  const [selectedItem, setSelectedItem]= useState();
 
   const siEstoyEditando = async () => {
     setNueva(false);
@@ -34,14 +79,15 @@ const Preventa = (props) => {
           cliente = element;
         } 
     });
-    await preventaDesdeBDD(preventaNumero);//busca la preventa en la BDD y la carga al local storage
+    await preventaDesdeBDD(preventaNumero);//busca la preventa en la BDD  y la carga al local storage
     console.log("cliente rescatado =" ,cliente.descripcion);
+    cargarDatosEditando();
+    // console.log("preventa rescatada =" ,cliente.descripcion);
     setDataCliente(cliente);
   }
   
   useEffect(() => {
     const loadData = async () => {
-     
         if (edit === true) {
           console.log("editando PREVENTA");
           await siEstoyEditando();
@@ -50,29 +96,82 @@ const Preventa = (props) => {
         // Cargar datos aquí
           cargarDatos();
         }
-      
     };
-  
-    console.log("entro a preventa editando= T nueva =fale ", edit);
+    const checkInternetAccess = async () => {
+      try {
+        let endpoint = await configuracionEndPoint()
+        const response = await axios.get(endpoint);
+        // Si la solicitud se completa con éxito, significa que hay acceso al servidor
+        setHasInternetAccess(true);
+      } catch (error) {
+        // Si ocurre un error, no hay acceso al servidor
+        setHasInternetAccess(false);
+      }
+    };
+    // console.log("entro a preventa editando= T nueva =fale ", edit);
     loadData();
-  }, [isFocused]);
+    checkInternetAccess();
+    console.log("hay internet?", hasInternetAccess);
+  }, [isFocused, isModalEditarVisible]);
   
+  const cargarDatosEditando = async () => {
+
+    const calcularDescuento = async (elemento) => {
+      let itemArray = await getArticuloPorCodigo(elemento.id);
+      let articulo = itemArray[0];
+      // articulo.seleccionados = selectedItem.cantidad;
+      let lista = await obtenerPrecio(articulo);
+      articulo.precio = lista;
+      return {descuento:10, lista: lista};
+    }
+  
+    const carritoData = await obtenerPreventaDeStorage();
+    console.log("prv119 ",carritoData);
+  
+    if (carritoData.length != 0) {
+      const updatedCarritoData = await Promise.all(carritoData.map(async (item) => {
+        const {descuento, lista} = await calcularDescuento(item);
+        console.log(lista);
+        return {
+          cantidad: item.cantidad,
+          descripcion: item.descripcion,
+          id: item.id,
+          iva: item.iva,
+          precio: item.precioTotal,
+          descuento: descuento,
+          precioLista: lista,/* lista con iva */
+          // precio: ( item.precioTotal / ((100-item.descuento)/100) / item.cantidad ),
+          // precioLista: (item.precioTotal / ((100 - item.descuento) / 100) / item.cantidad), //calculo el precio de lista
+        };
+      }));
+      console.log("prv146 ",updatedCarritoData);
+      setCarrito(updatedCarritoData);
+    }
+    setCantidadItems(carritoData.length);
+    setTotal(await calcularTotal());
+  };
+
   const cargarDatos = async () => {
     const carritoData = await obtenerPreventaDeStorage();
+    console.log("prv136 ",carritoData);
     if (carritoData.length != 0) {
-      setCarrito(carritoData.map(item => ({ cantidad: item.cantidad, descripcion: item.descripcion, id: item.id, precio: item.precioFinal })));
+      setCarrito(carritoData.map(item => ({ cantidad: item.cantidad, 
+                                            descripcion: item.descripcion,
+                                            id: item.id,
+                                            iva: item.iva,
+                                            precio: item.precioTotal, 
+                                            descuento: item.descuento,
+                                            precioLista:( item.precioTotal / ((100-item.descuento)/100) / item.cantidad ),//calculo el precio de lista
+                                           })));
     }
     setCantidadItems (carritoData.length);
     setTotal(await calcularTotal());
-    setOcultarPreventa(false);
   };
 
   const grabarPreventa = async () => {
     /* Grabar la preventa en la base de datos requiere cabeza de la preventa y grabar cada item */
-    /* todos los errores deben estar controlado */
-    console.log("grabare carrito ooo ",carrito);
+    /* todos los errores deben estar controlados */
     if (carrito.length > 0) {
-      
       let numero = preventaNumero
       if (nueva) {
       numero = await nextPreventa();
@@ -85,12 +184,10 @@ const Preventa = (props) => {
     navigation.goBack();
   };
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [ocultarPreventa, setOcultarPreventa] = useState(true);
-  const [nota, setNota] = useState('');
   
   const abrirModal = () => { //modal de la nota
     setIsModalVisible(true);
+    
   };
   
   const cerrarModal = () => { //modal de la nota
@@ -99,14 +196,87 @@ const Preventa = (props) => {
     
   };
 
+  const abrirModalEditar = (item) => { //modal de la nota
+    setIsModalEditarVisible(true);
+    // setSelectedItem (item);
+    console.log("prev157", item);
+  };
+  
+  const cerrarModalEditar = () => { //modal de la nota
+    setIsModalEditarVisible(false);
+    // setSelectedItem ({});    
+  };
+
+  const handleDelete = async() =>{ /* borra un item seleccionado, deñ storage */
+    
+    console.log("borrar ",selectedItem);
+    await eliminarItemEnPreventaEnStorage(selectedItem.id);
+    setIsModalEditarVisible(false);
+
+    //refrescar la preventa
+  }
+
+  const obtenerPrecio = async (articulo)=>{
+    // console.log("AR61 lista", listaDePrecios ,"articulo", articulo);
+    let costo = articulo.precioCosto;
+    let iva = articulo.iva;
+    let costoIva = costo * (1+ iva/100);
+    let ganancia = 0;
+    let listaDePrecios= dataCliente.listaPrecio;
+    switch (listaDePrecios) {
+      case "1":
+        ganancia = articulo.lista1;
+        return (costoIva * (1 + ganancia /100)) 
+      case "2":
+        ganancia = articulo.lista2;
+        return (costoIva * (1 + ganancia /100)) 
+      case "3":
+        ganancia = articulo.lista3;
+        return (costoIva * (1 + ganancia /100)) 
+      case "4":
+        ganancia = articulo.lista4;
+        return (costoIva * (1 + ganancia /100)) 
+      case "5":
+        ganancia = articulo.lista5;
+        return (costoIva * (1 + ganancia /100)) 
+        break;
+      default:
+        return 0;
+        // código a ejecutar si la expresión no coincide con ningún valor
+    }
+  }
+
+  const handleEdit = async() =>{
+
+
+    let itemArray = await getArticuloPorCodigo (selectedItem.id);
+    let articulo = itemArray[0];
+    articulo.seleccionados = selectedItem.cantidad;
+    articulo.precio = await obtenerPrecio(articulo);
+    console.log("editar ",articulo);
+    setIsModalEditarVisible(false);
+    navigation.navigate('AddArticulo', { articulo });
+    //refrescar la preventa
+  }
+
   const guardarNota = () => {
     // Aquí puedes implementar la lógica para guardar la nota en tu aplicación
     console.log('Nota guardada:', nota);
   };
 
+  const traerFrecuentes = async() => {
+    // Aquí puedes implementar la lógica para guardar la nota en tu aplicación
+    setEstoyBuscandoFrecuentes(true);
+    hasInternetAccess == true? (
+    // console.log('buscando frecuentes:');
+    setArticulosFrecuentes(await getArticulosFrecuentesDesdeAPI(dataCliente.id))    
+    ):(
+    console.log('buscando frecuentes:'))
+  };
+
   const abrirArticulos = async () => {
     let cantidad = await configuracionCantidadMaximaArticulos();
-    console.log("CANTIDAD ", cantidad, carrito.length);
+    // console.log("CANTIDAD ", cantidad, carrito.length);
   
     if (carrito.length >= cantidad) {
       Alert.alert(
@@ -121,7 +291,8 @@ const Preventa = (props) => {
         ]
       );
     } else {
-      navigation.navigate('Articulos', { numeroPreventa: preventaNumero, cliente: dataCliente.id, cantItems: cantidadItems });
+      // console.log("cli CLI CLI listaprecio ", dataCliente.listaPrecio);
+      navigation.navigate('Articulos', { numeroPreventa: preventaNumero, cliente: dataCliente.id, listaDePrecio: dataCliente.listaPrecio, cantItems: cantidadItems, articulosFrecuentes: articulosFrecuentes, hasInternetAccess: hasInternetAccess });
     }
   };
 
@@ -132,60 +303,73 @@ const Preventa = (props) => {
   // };
 
   const handleItem = (item) =>{
-    console.log("articulo editando",item); 
-    Alert.alert(
-      "En esta vercion, no se pueden editar articulos desde esta ventana.",
-      `Para corregir un articulo agreguelo nuevamente y se actualizaran los datos.`,
-      [
-        {
-          text: "Aceptar",
-          onPress: () => console.log("Aceptar presionado"),
-          style: "cancel"
-        }
-      ]
-    );
+    setSelectedItem(item);
+    abrirModalEditar(item);
+    
   }
 
   // Renderiza cada elemento del array reducido
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }) => {
+    // console.log("prv152 intem ", item);
+    return (
     <TouchableOpacity /*style= {{ borderWidth: 1,}}*/ onPress={() => handleItem(item)}>
-      <Text>{`${item.descripcion} `}</Text>
+      <Text style={{fontWeight: "bold"}}>{`${item.descripcion} `}</Text>
       <View style= {{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline',}}>
-        {/* <Text>Cantidad: {item.cantidad} Total {`$: ${String(item.precio)}`}</Text> */}
-        <View style= {{ width: "32%",
-                        borderWidth: 1 ,
+        
+        <View style= {{ width: "20%",
+                        // borderWidth: 1 ,
+                        borderRightWidth:1,
                         flexDirection: 'row', // Hijos en columna vertical
                         alignItems: 'center', // Alinear hijos a la izquierda
                       }}>
-          <Text>Cantidad: {item.cantidad}</Text>                
+          <Text >Cantidad: {item.cantidad}</Text>                
         </View>
-        <View style= {{ borderWidth: 1 , width: "32%",
+        <View style= {{ borderWidth: 0 , width: "22%", borderRightWidth:1,
                         flexDirection: 'column', // Hijos en columna vertical
                         alignItems: 'flex-start', // Alinear hijos a la izquierda
                       }}>
-          <Text>Total {`$: ${String(Math.round(item.precio))}`}</Text>               
+          <Text>Lista: $ {String(item.precioLista.toFixed(2))}  </Text>              
+                       
         </View>
-        <View style= {{ borderWidth: 1 , width: "20%", marginBottom: 4, marginTop: 4, // aca sacaremos todos los margin despues de probar el scrol
+        <View style= {{ borderWidth: 0 , width: "22%", borderRightWidth:1,
                         flexDirection: 'column', // Hijos en columna vertical
                         alignItems: 'flex-start', // Alinear hijos a la izquierda
                       }}>
-          <Text>Editar</Text>            
+          <Text>Descuento: { String(item.descuento)} % </Text>              
+                       
+        </View>
+        <View style= {{ borderWidth: 0 , width: "22%",
+                        flexDirection: 'column', // Hijos en columna vertical
+                        alignItems: 'flex-start', // Alinear hijos a la izquierda
+                      }}>
+                        
+          <Text>Total: {`$ ${String(item.precio?.toFixed(2))}`}</Text>               
+        </View>
+        <View style= {{ borderWidth: 0 , width: "10%", marginBottom: 4, marginTop: 4, // aca sacaremos todos los margin despues de probar el scrol
+                        flexDirection: 'column', // Hijos en columna vertical
+                        alignItems: 'flex-start', // Alinear hijos a la izquierda
+                      }}>
+          {/* <Text>Editar</Text> */}
+          <Icon name="edit" size={30} color="#9203F9" />            
         </View>
       </View>
       <View style={{ borderBottomColor: 'black', borderBottomWidth: 1, margin:2, marginBottom: 4 }} />
     </TouchableOpacity>
-  );
+  )};
   const BarraIcons = () =>{
     return (
     <View style={styles.iconBar}>
       <TouchableOpacity onPress={grabarPreventa}>
         <Icon name="save" size={30} color= "cyan" />
+        <Text style={{ color:"cyan"}}>Guardar</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={abrirArticulos}>
         <Icon name="plus" size={30} color="cyan" />
+        <Text style={{ color:"cyan"}}>Agrega Item</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={abrirModal}>
         <Icon name="wpforms" size={30} color="cyan" />
+        <Text  style={{ color:"cyan"}}>Nota</Text>
       </TouchableOpacity>
       {/* <TouchableOpacity onPress={cargarDatos}>
         <Fontisto size={30} color="cyan" name='preview' />
@@ -205,13 +389,20 @@ const Preventa = (props) => {
                   }}>
         {dataCliente.descripcion}
       </Text>
+      <TouchableOpacity onPress={traerFrecuentes}>
+        {/* <Icon name="plus" size={20} color="orange" />  */}
+        <Text>articulos frecuentes: {(articulosFrecuentes.length == 0)? (
+          (estoyBuscandoFrecuentes == false)? <Icon name="question-circle-o" size={20} color="black" /> : <Icon name="hourglass-2" size={20} color="black" />
+          
+          ): articulosFrecuentes.length}</Text>
+      </TouchableOpacity>
       <View style= {styles.cabezaData}>
         <View style= {styles.cabezaSubdata}>
           <Text>Codigo: {dataCliente.id}</Text>
           <Text>Saldo: $ -{dataCliente.importeDeuda}</Text>
         </View>
         <View style= {styles.cabezaSubdata}>
-          <Text>Total $: {total} </Text>
+          <Text>Total $: {total?.toFixed(2)} </Text>
           <Text>Items: {carrito.length.toString()} </Text>
         </View >
         </View>
@@ -239,15 +430,16 @@ const Preventa = (props) => {
               onChangeText={setNota}
               />
             <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={cerrarModal}>
+              {/* <TouchableOpacity style={styles.modalButton} onPress={cerrarModal}>
                 <Text style={styles.modalButtonText}>Cancelar</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity style={styles.modalButton} onPress={cerrarModal}>
                 <Text style={styles.modalButtonText}>Guardar</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
+        {isModalEditarVisible? <ModalEliminarEditarCancelar  item={selectedItem} handleEdit={handleEdit} handleDelete={handleDelete} cerrarModalEditar={cerrarModalEditar}/>:""}
         <View style={{ flex: 1, }}>
           <FlatList
           data={carrito}
@@ -331,12 +523,10 @@ const styles = StyleSheet.create({
   iconBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: "#0c2f3c",
-    // color: "#96ddf5",
+    backgroundColor: "#000000",
     marginBottom: 10,
     padding: 20,
     width: '100%',
-    // backgroundColor: "#1223a444",
   },
   separator: {
     height: 1,

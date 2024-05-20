@@ -1,0 +1,31 @@
+{
+    "test": "test a bstr APK",
+    "dia y hora": "19/05 8:21",
+    "tipo": "manual",
+    "errores":{
+        "no muestra precios": "al parecer falto actualizar la parte de los precios de listas y iva",
+        "":true
+    },
+    "funciona ok":{
+        "abandonar preventa incompleta":"ok",
+        "cantidad de articulos":"ok",
+        "configuracion":"ok",
+        "precios con ivas distinto":"corregido",
+        "actualizacion de precios y datos": true,
+        "precios descuentos":"corregido",
+        "precios listas distinto":"corregido",
+        "configuracion vendedor":"ok",
+        "modificar item en preventa": "ok",
+        "articulos frecuentes":"super lento",
+
+        "":true
+    },
+    "testear todavia":{
+        "buscar por codigo":"implementar",
+        "editar preventas del local storage":"verde",
+        "configuracion":"no me muestra el venderor grabado",
+        "":true
+    },
+    "borrar": "componente articulo"
+
+}

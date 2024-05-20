@@ -88,23 +88,24 @@ const renderItem = ({ item }) => (
         );
         break;
       case 'Editar':
-        // Lógica para editar el elemento seleccionado
+        // editar la preventa seleccionada
+        // 
         console.log("Lista73, c",selectedItem);
         const preventaNumero = selectedItem.numero;
         const cliente = selectedItem.clienteCodigo;
-        // let edit=true;
-        // navigation.navigate('Preventa', { preventaNumero, cliente, edit });
-        Alert.alert(
-          "En esta version, no se pueden editar preventas.",
-          `Por el momento la unica forma es borrarla y crear una nueva.`,
-          [
-            {
-              text: "Aceptar",
-              onPress: () => console.log("Aceptar presionado"),
-              style: "cancel"
-            }
-          ]
-        );
+        let edit=true;
+        navigation.navigate('Preventa', { preventaNumero, cliente, edit });
+        // Alert.alert(
+        //   "En esta version, no se pueden editar preventas.",
+        //   `Por el momento la unica forma es borrarla y crear una nueva.`,
+        //   [
+        //     {
+        //       text: "Aceptar",
+        //       onPress: () => console.log("Aceptar presionado"),
+        //       style: "cancel"
+        //     }
+        //   ]
+        // );
         break;
       case 'Cancelar':
         closeModal();
