@@ -96,7 +96,7 @@ const getArticuloPorCodigo = (codigo) => {
         'SELECT * FROM articulos WHERE id = ?', 
         [codigo], 
         (_, { rows }) => {
-          console.log("rows._array 96 art controler", rows._array);
+          // console.log("rows._array 96 art controler", rows._array);
           resolve(rows._array);
         }, 
         (_, error) => {

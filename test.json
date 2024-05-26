@@ -3,10 +3,15 @@
     "dia y hora": "19/05 8:21",
     "tipo": "manual",
     "errores":{
-        "no muestra precios": "al parecer falto actualizar la parte de los precios de listas y iva",
+        "al editar preventa no muestra detalle del cliente ":"error",
+        "al editar preventa no muestra precios": "al parecer falto actualizar la parte de los precios de listas y iva",
+        "si tengo un solo articulo cuando lo borro no sale hasta agregar uno nuevo":"ERROR",
         "":true
+        
     },
     "funciona ok":{
+        "modal de lista de preventas, no se cierra despues de entrar a editar una preventa":"ok",
+        "addArticulo al editar no muestra el descuento":"ok",
         "abandonar preventa incompleta":"ok",
         "cantidad de articulos":"ok",
         "configuracion":"ok",
@@ -17,12 +22,12 @@
         "configuracion vendedor":"ok",
         "modificar item en preventa": "ok",
         "articulos frecuentes":"super lento",
+        "editar preventas del local storage":"funciona con algunos errores al mostrar datos",
 
         "":true
     },
     "testear todavia":{
         "buscar por codigo":"implementar",
-        "editar preventas del local storage":"verde",
         "configuracion":"no me muestra el venderor grabado",
         "":true
     },

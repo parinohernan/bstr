@@ -33,7 +33,7 @@ const Clientes = () => {
   const handleClientClick = async (cliente) => {
     let preventaNumero = await nextPreventa();
     // console.log('Código del cliente:', cliente.descripcion);
-    console.log('Preventa Número:', preventaNumero);
+    console.log('Preventa Número:', preventaNumero, cliente);
     let edit= false;
     navigation.navigate('Preventa', { preventaNumero, cliente, edit });
   };

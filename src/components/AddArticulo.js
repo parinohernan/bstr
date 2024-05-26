@@ -83,7 +83,7 @@ const AddArticulo = ({route}) => {
   }
 
   const agregarItemPreventaStorage = async() => {
-    console.log("agregarItemPreventaStorage", articuloConDetalles);
+    // console.log("agregarItemPreventaStorage", articuloConDetalles);
     const preventa = await obtenerPreventaDeStorage();
     preventa.push(articuloConDetalles);
     guardarPreventaEnStorage(preventa);

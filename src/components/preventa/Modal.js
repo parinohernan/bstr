@@ -1,27 +1,30 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
+import { AddArticulo } from '../AddArticulo';
 
 function ModalEliminarEditarCancelar ({ item, handleEdit, handleDelete, cerrarModalEditar }) {
     // const cerrarModalEditar = 
     console.log("modal",item);
     return (
-    <Modal>
-        <View style={styles.modalContainer}>
-        <TouchableOpacity onPress={handleEdit}>
+    <Modal 
+    animationType="slide"
+    transparent={true}
+    onRequestClose={cerrarModalEditar} >
+        <View style={{ flex: 1, flexDirection:"row", justifyContent: 'center', alignItems: 'center',backgroundColor: "#33333389" }}>
+        <TouchableOpacity style={{ backgroundColor: "cyan" , padding: 14, borderBottomLeftRadius: 23}} onPress={handleEdit}>
             <View style={styles.modalOption}>
             <Icon name="edit" size={40} color="blue" />
-            <Text style={styles.modalOptionText}>Editar</Text>
+            <Text style={styles.modalOptionText} >Editar</Text>
             </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete}>
+        <TouchableOpacity style={{ backgroundColor: "cyan" , padding: 14, }} onPress={handleDelete}>
             <View style={styles.modalOption}>
             <Icon name="trash" size={40} color="red" />
             <Text style={styles.modalOptionText}>Eliminar</Text>
             </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={cerrarModalEditar}>
+        <TouchableOpacity style={{ backgroundColor: "cyan" , padding: 14, borderBottomRightRadius : 23, borderTopRightRadius : 23}} onPress={cerrarModalEditar}>
             <View style={styles.modalOption}>
             <Icon name="times" size={40} color="black" />
             <Text style={styles.modalOptionText}>Cancelar</Text>
@@ -33,7 +36,9 @@ function ModalEliminarEditarCancelar ({ item, handleEdit, handleDelete, cerrarMo
 
     const styles = StyleSheet.create({
     modalContainer: {
-        backgroundColor: '#06181e',
+        backgroundColor: 'orange',
+        // width: "30%",
+        // maxHeight: 300,
         padding: 20,
         flex: 1,
         justifyContent: 'center',
@@ -67,7 +72,12 @@ function ModalEliminarEditarCancelar ({ item, handleEdit, handleDelete, cerrarMo
       modalButtonText: {
         color: 'white',
         fontWeight: 'bold',
-    }
+      },
+      modalOptionText: {
+        color: 'black',
+        fontWeight: 'bold',
+        paddingBottom: 20,
+      }
     }) 
 
     export {ModalEliminarEditarCancelar};

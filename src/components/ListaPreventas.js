@@ -3,6 +3,8 @@ import { View, Text, FlatList, Modal, TouchableOpacity, Button, Alert, StyleShee
 import { db } from '../../database/database';
 import { useNavigation } from '@react-navigation/native';
 import { borrarPreventaYSusItems } from '../../database/controllers/Preventa.Controller';
+import { getClientes } from '../../database/controllers/Clientes.Controller';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const ListaPreventas = () => {
   const navigation = useNavigation();
@@ -28,7 +30,7 @@ db.transaction((tx) => {
             preventasArray.push(result.rows.item(i));
         }
         setPreventas(preventasArray);
-        console.log("que tiene",preventasArray);
+        // console.log("que tiene",preventasArray);
         },
         (_, error) => {
         console.error('Error al cargar preventas:', error);
@@ -62,7 +64,13 @@ const renderItem = ({ item }) => (
     setSelectedItem(null);
   };
 
-  const handleAction = (action) => {
+  const buscarCliente = async(clienteCodigo, clientes) => {
+
+      return clientes.find(element => element.id == clienteCodigo);
+
+  }
+
+  const handleAction = async(action) => {
     // Agrega la lógica para manejar las acciones (Borrar, Editar, Cancelar)
     switch (action) {
       case 'Borrar':
@@ -80,7 +88,9 @@ const renderItem = ({ item }) => (
               onPress: () => {
                 console.log('Borrar preventa número ', selectedItem.numero);
                 borrarPreventaYSusItems(selectedItem.numero);
-                navigation.goBack();
+                // navigation.goBack();
+                cargarPreventas();
+                closeModal();
               },
             },
           ],
@@ -89,23 +99,17 @@ const renderItem = ({ item }) => (
         break;
       case 'Editar':
         // editar la preventa seleccionada
-        // 
-        console.log("Lista73, c",selectedItem);
+        // const siEstoyEditando = async () => {
+        const  clientes = await getClientes();
+        let objCliente = await buscarCliente(selectedItem.clienteCodigo, clientes);
+      
+        console.log("Lista93, c",clientes.length, objCliente);
         const preventaNumero = selectedItem.numero;
-        const cliente = selectedItem.clienteCodigo;
+        const clienteCodigo = selectedItem.clienteCodigo;
         let edit=true;
-        navigation.navigate('Preventa', { preventaNumero, cliente, edit });
-        // Alert.alert(
-        //   "En esta version, no se pueden editar preventas.",
-        //   `Por el momento la unica forma es borrarla y crear una nueva.`,
-        //   [
-        //     {
-        //       text: "Aceptar",
-        //       onPress: () => console.log("Aceptar presionado"),
-        //       style: "cancel"
-        //     }
-        //   ]
-        // );
+        setModalVisible(false);
+        navigation.navigate('EditPreventa', { preventaNumero, cliente : objCliente, edit });
+
         break;
       case 'Cancelar':
         closeModal();
@@ -139,7 +143,7 @@ const renderItem = ({ item }) => (
         keyExtractor={(item) => item.numero.toString()}
       />
 
-      <Modal
+      {/* <Modal
         visible={modalVisible}
         animationType="slide"
         transparent={true}
@@ -153,7 +157,33 @@ const renderItem = ({ item }) => (
             <Button title="Cancelar" onPress={() => handleAction('Cancelar')} />
           </View>
         </View>
-      </Modal>
+      </Modal> */}
+      <Modal 
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeModal} >
+        <View style={{ flex: 1, flexDirection:"row", justifyContent: 'center', alignItems: 'center',backgroundColor: "#33333389" }}>
+        <TouchableOpacity style={{ backgroundColor: "cyan" , padding: 14, borderBottomLeftRadius: 23}} onPress={() => handleAction('Editar')}>
+            <View style={styles.modalOption}>
+            <Icon name="edit" size={40} color="blue" />
+            <Text style={styles.modalOptionText} >Editar</Text>
+            </View>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ backgroundColor: "cyan" , padding: 14, }} onPress={() => handleAction('Borrar')}>
+            <View style={styles.modalOption}>
+            <Icon name="trash" size={40} color="red" />
+            <Text style={styles.modalOptionText}>Eliminar</Text>
+            </View>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ backgroundColor: "cyan" , padding: 14, borderBottomRightRadius : 23, borderTopRightRadius : 23}} onPress={() => handleAction('Cancelar')}>
+            <View style={styles.modalOption}>
+            <Icon name="times" size={40} color="black" />
+            <Text style={styles.modalOptionText}>Cancelar</Text>
+            </View>
+        </TouchableOpacity>
+        </View>
+    </Modal>
     </View>
   );
 };
@@ -198,7 +228,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#7f8c8d',
   }, 
-  
+  modalContainer: {
+    backgroundColor: 'orange',
+    // width: "30%",
+    // maxHeight: 300,
+    padding: 20,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    color: "#30bced",
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    color: "#30bced",
+    width: '100%',
+    height: 40,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+  },
+  modalButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    marginHorizontal: 5,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  modalOptionText: {
+    color: 'black',
+    fontWeight: 'bold',
+    paddingBottom: 20,
+  }
+
 });
 
 export default ListaPreventas;

@@ -5,6 +5,7 @@ import LoginScreen from './views/LoginScreen';
 import Home from './views/Home';
 import Clientes from './views/Clientes';
 import Preventa from './views/Preventa';
+import EditPreventa from './views/EditPreventa';
 import Articulos from './views/Articulos';
 // import Informes from './views/Informes';
 import Sincronizar from './views/Sincronizar';
@@ -35,6 +36,7 @@ const App = () => {
   const RenderUsuariosScreen = (props) => <Usuarios />;
   const RenderClientesScreen = (props) => <Clientes {...props} setClienteSeleccionado={setClienteSeleccionado} />;
   const RenderPreventaScreen = (props) => <Preventa {...props} clienteSeleccionado={clienteSeleccionado} setPreventaSeleccionada={setPreventaSeleccionada} />;
+  const RenderEditPreventaScreen = (props) => <EditPreventa {...props} clienteSeleccionado={clienteSeleccionado} setPreventaSeleccionada={setPreventaSeleccionada} />;
   const RenderUserMenuPPal = (props) => <UserMenuPPal {...props}/>;
 
   return (
@@ -52,6 +54,7 @@ const App = () => {
         <Stack.Screen name="Usuarios" component={RenderUsuariosScreen} />
         <Stack.Screen name="Clientes" component={RenderClientesScreen} />
         <Stack.Screen name="Preventa" component={RenderPreventaScreen} />
+        <Stack.Screen name="EditPreventa" component={RenderEditPreventaScreen} />
         <Stack.Screen name="UserMenuPPal" component={RenderUserMenuPPal} />
 
       </Stack.Navigator>
