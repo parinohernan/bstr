@@ -72,9 +72,7 @@ const EditPreventa = (props) => {
   const siEstoyEditando = async () => {
     // setNueva(false);
     setNoCarguePreventa(false); //una ves que este en falso ya no voy a entrar a "siEstoyEditando"
-    console.log("76 ver si es necesario buscar cliente",cliente, "preven ",preventaNumero);
     await preventaDesdeBDD(preventaNumero);//busca la preventa en la BDD  y la carga al local storage
-    console.log("cliente rescatado lista= ",cliente.listaPrecio );
     await cargarDatosEditando(); //cargar
     
   }
@@ -82,13 +80,13 @@ const EditPreventa = (props) => {
   useEffect(() => {
     const loadData = async () => {
       //tengo que cargar los datos en la storage
-        console.log("editando PREVENTA");
+        console.log("editando PREVENTA", preventaNumero);
         noCarguePreventa? (
             await siEstoyEditando()
             
         ):(
         //   console.log("Editando pero ya cargue antes al strage")
-          cargarDatos()
+          cargarDatosEditando()
         )
 
     };
@@ -114,20 +112,18 @@ const EditPreventa = (props) => {
     const calcularDescuento = async (elemento) => {
       let itemArray = await getArticuloPorCodigo(elemento.id);
       let articulo = itemArray[0];
-      console.log("133prv data",cliente);
       let lista = await obtenerPrecio(articulo);
-      console.log("134obteniendo precio de ",articulo, lista/*, cliente*/);
       articulo.precio = lista;
       let factorDescuento = elemento.precioTotal / (lista * elemento.cantidad);
       let descuento = 0;
       descuento = 100 - (factorDescuento * 100);
-      console.info("138 ",descuento,lista);
+      descuento == 0 ? descuento = 0 : descuento = Math.round(descuento * 100) / 100;
       return {descuento: descuento, lista: lista};
     }
   
     const carritoData = await obtenerPreventaDeStorage();
     console.log("prv129 ",carritoData);
-  
+    
     if (carritoData.length > 0) {
       const updatedCarritoData = await Promise.all(carritoData.map(async (item) => {
         const {descuento, lista} = await calcularDescuento(item);
@@ -152,23 +148,47 @@ const EditPreventa = (props) => {
    
   };
 
-  const cargarDatos = async () => {
+//   const cargarDatos = async () => {
     
-    const carritoData = await obtenerPreventaDeStorage();
-    console.log("prv166, ya tengo la preventa en storage ",carritoData);
-    if (carritoData.length != 0) {
-      setCarrito(carritoData.map(item => ({ cantidad: item.cantidad, 
-                                            descripcion: item.descripcion,
-                                            id: item.id,
-                                            iva: item.iva,
-                                            precio: item.precioTotal, 
-                                            descuento: item.descuento,
-                                            precioLista:( item.precioTotal / ((100-item.descuento)/100) / item.cantidad ),//calculo el precio de lista
-                                           })));
-    }
-    setCantidadItems (carritoData.length);
-    setTotal(await calcularTotal());
-  };
+//     const calcularDescuento = async (elemento) => {
+//         let itemArray = await getArticuloPorCodigo(elemento.id);
+//         let articulo = itemArray[0];
+//         console.log("133prv data",cliente);
+//         let lista = await obtenerPrecio(articulo);
+//         console.log("134obteniendo precio de ",articulo, lista/*, cliente*/);
+//         articulo.precio = lista;
+//         let factorDescuento = elemento.precioTotal / (lista * elemento.cantidad);
+//         let descuento = 0;
+//         descuento = 100 - (factorDescuento * 100);
+//         console.info("138 ",descuento,lista);
+//         return {descuento: descuento, lista: lista};
+//       }
+    
+//       const carritoData = await obtenerPreventaDeStorage();
+//       console.log("prv129 ",carritoData);
+      
+//       if (carritoData.length > 0) {
+//         const updatedCarritoData = await Promise.all(carritoData.map(async (item) => {
+//           const {descuento, lista} = await calcularDescuento(item);
+//           console.log(lista);
+//           return {
+//             cantidad: item.cantidad,
+//             descripcion: item.descripcion,
+//             id: item.id,
+//             iva: item.iva,
+//             precio: item.precioTotal,
+//             descuento: descuento.toFixed(),
+//             precioLista: lista,/* lista con iva */
+//             // precio: ( item.precioTotal / ((100-item.descuento)/100) / item.cantidad ),
+            
+//           };
+//         }));
+//         console.log("prv156 ",updatedCarritoData);
+//         setCarrito(updatedCarritoData);
+//       }
+//       setCantidadItems(carritoData.length);
+//       setTotal(await calcularTotal());
+//   };
 
   const grabarPreventa = async () => {
     /* Grabar la preventa en la base de datos requiere cabeza de la preventa y grabar cada item */
@@ -189,7 +209,6 @@ const EditPreventa = (props) => {
     console.log("preventa estaba vacia  ");
     navigation.goBack();
   };
-
   
   const abrirModal = () => { //modal de la nota
     setIsModalVisible(true);
@@ -214,13 +233,15 @@ const EditPreventa = (props) => {
   };
 
   const handleDelete = async() =>{ /* borra un item seleccionado, deñ storage */
-    
+    if (cantidadItems < 2) {
+        console.log("CHAU NO QUIERO ESTA PREVNTA");
+        navigation.navigate('Informes', {});
+    }
     console.log("borrar ",selectedItem);
     console.info("esta");
     await eliminarItemEnPreventaEnStorage(selectedItem.id);
     setIsModalEditarVisible(false);
 
-    //refrescar la preventa
   }
 
   const obtenerPrecio = async (articulo)=>{

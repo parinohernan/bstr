@@ -86,9 +86,7 @@ const renderItem = ({ item }) => (
               text: 'Borrar',
               style: 'destructive',
               onPress: () => {
-                console.log('Borrar preventa número ', selectedItem.numero);
                 borrarPreventaYSusItems(selectedItem.numero);
-                // navigation.goBack();
                 cargarPreventas();
                 closeModal();
               },
@@ -99,11 +97,8 @@ const renderItem = ({ item }) => (
         break;
       case 'Editar':
         // editar la preventa seleccionada
-        // const siEstoyEditando = async () => {
         const  clientes = await getClientes();
         let objCliente = await buscarCliente(selectedItem.clienteCodigo, clientes);
-      
-        console.log("Lista93, c",clientes.length, objCliente);
         const preventaNumero = selectedItem.numero;
         const clienteCodigo = selectedItem.clienteCodigo;
         let edit=true;

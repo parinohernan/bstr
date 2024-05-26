@@ -10,7 +10,7 @@ const guardarPreventaEnStorage = async (preventa) => {
     try {
       if (preventa !== null && preventa !== undefined ) {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(preventa));
-        console.log('Preventa guardada con éxito en Storage');
+        // console.log('Preventa guardada con éxito en Storage');
       } else {
         console.error('Error: El valor de la preventa es null o undefined');
       }
@@ -107,7 +107,7 @@ const calcularTotal = async () => {
 
 // Limpiar los datos de preventa almacenados en AsyncStorage
 const limpiarPreventaDeStorage = async () => {
-    console.log("STR44 limpiando preventa Storage");
+    // console.log("STR44 limpiando preventa Storage");
   try {
     await AsyncStorage.removeItem(STORAGE_KEY);
   } catch (error) {
@@ -119,15 +119,16 @@ const limpiarPreventaDeStorage = async () => {
 // solo para eliminar un item
 const eliminarItemEnPreventaEnStorage = async (codigo) => {
   const preventa = await obtenerPreventaDeStorage();
-  console.log("PREVENTA cant items",preventa.length);
+  // console.log("PREVENTA cant items",preventa.length);
   if (preventa.length > 1){
-    // console.log("ELIMINAR de la preventa actual", codigo, preventa);
+    console.log("ELIMINAR de la preventa actual", codigo, preventa);
     guardarPreventaEnStorage(preventa.filter(item => item.id !== codigo));
   } else {
     // Eliminar todo el valor del storage
-    await AsyncStorage.removeItem(STORAGE_KEY);
-    guardarPreventaEnStorage([]);
-    console.log("resultado tiene que eras vacio ",await AsyncStorage.getItem(STORAGE_KEY));
+    await limpiarPreventaDeStorage();
+    // await AsyncStorage.removeItem(STORAGE_KEY);
+    await guardarPreventaEnStorage([]);
+    console.log("resultado tiene que ser vacio ",await AsyncStorage.getItem(STORAGE_KEY));
   }
 }
 

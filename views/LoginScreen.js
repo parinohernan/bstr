@@ -137,7 +137,7 @@ const closeModal = () => {
 };
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/OIG1.jpg')} style={styles.logo} />
+      <Image source={require('../assets/bstr.png')} style={styles.logo} />
       <Text style={styles.logoText}>Bienvenido</Text>
      
       <Kaede style={styles.input}
@@ -158,9 +158,9 @@ const closeModal = () => {
         onChangeText = { ( texto )  =>  {  handlePassword(texto)  } }
         />
       <Ingresar/>
-      <Text style={styles.vecsionText}>hernyDev version 1.1.2</Text>
-      <IngresarRoot/>
-      <IngresarUser/>
+      <Text style={styles.vecsionText}>hernyDev version 1.2.0</Text>
+      {/* <IngresarRoot/>
+      <IngresarUser/> */}
       <Modal
         visible={modalVisible}
         animationType="slide"

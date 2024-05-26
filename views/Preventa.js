@@ -158,9 +158,11 @@ const Preventa = (props) => {
   };
 
   const handleDelete = async() =>{ /* borra un item seleccionado, deñ storage */
+  if (cantidadItems < 2) {
+    console.log("CHAU NO QUIERO ESTA PREVNTA");
+    navigation.navigate('Clientes', {});
+}
     
-    console.log("borrar ",selectedItem);
-    console.info("esta");
     await eliminarItemEnPreventaEnStorage(selectedItem.id);
     setIsModalEditarVisible(false);
 
