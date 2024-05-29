@@ -9,7 +9,7 @@ const VendedoresSelect = (props) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([
-    { label: 'Hernan Parino', value: '1234' }
+    { label: 'Presione Buscar', value: '1234' }
   ]);
 
   const handleBuscarVendedores = async () => {

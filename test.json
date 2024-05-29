@@ -3,9 +3,7 @@
     "dia y hora": "19/05 8:21",
     "tipo": "manual",
     "errores":{
-        "al editar preventa no muestra detalle del cliente ":"error",
-        "al editar preventa no muestra precios": "al parecer falto actualizar la parte de los precios de listas y iva",
-        "si tengo un solo articulo cuando lo borro no sale hasta agregar uno nuevo":"ERROR",
+        
         "":true
         
     },

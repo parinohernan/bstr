@@ -69,8 +69,9 @@ const Configurar = () => {
   return (
     <View style={styles.container}>
       <View style={styles.titulo}>
-        <Text style={styles.tituloText}>ASTR</Text>
+        <Text style={styles.tituloText}>BSTR</Text>
         <Text style={styles.subtituloText}>panel de configuracion,  {hasInternetAccess? console.log(hasInternetAccess, "tengo internet"): console.log("muerto, no tengo internet")}</Text>
+      <Button title="guardar configuracion" onPress={handleGuardarConfiguracion} buttonStyle={{ maxWidth: 250, marginTop:10 }} /> 
       </View>
       <Text >{hasInternetAccess? "✓":"X"} EndPoint:</Text>  
       <TextInput
@@ -91,6 +92,8 @@ const Configurar = () => {
       <View style={{ height: 100, zIndex: 10, borderColor: 'gray', borderWidth: 1, marginBottom: 10 }} >
 
         <VendedoresSelect style={{ height: 100, zIndex: 20}} configuracion={configuracion} setConfiguracion={setConfiguracion}/>
+        
+    
       </View>
       <Text>Cantidad máxima de artículos:</Text>
       <TextInput
@@ -109,11 +112,6 @@ const Configurar = () => {
 
       {/* Botones */}
 
-      { changes? 
-      <Button title="guardar configuracion" onPress={handleGuardarConfiguracion} buttonStyle={{ marginTop: 40 }} /> 
-      : 
-      <Button title="guardar configuracion" onPress={handleGuardarConfiguracion} buttonStyle={{ marginTop: 40 }} /> 
-      }
       
  
     </View>
